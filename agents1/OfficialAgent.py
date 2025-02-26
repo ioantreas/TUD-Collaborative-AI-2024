@@ -73,7 +73,12 @@ class BaselineAgent(ArtificialBrain):
         self._recent_vic = None
         self._received_messages = []
         self._moving = False
-        self._tasks = ['remove_objects']
+        self._tasks = ['remove_objects', 'search_rooms']
+        self._pending_room_checks = set()
+        self._search_again = False
+        self._searching_agent_area = False
+        self._victim_not_reported = False
+        self._penalised_rooms = set()
 
     def initialize(self):
         # Initialization of the state tracker and navigation algorithm
@@ -239,6 +244,7 @@ class BaselineAgent(ArtificialBrain):
                     self.received_messages = []
                     self.received_messages_content = []
                     self._send_message('Going to re-search all areas.', 'RescueBot')
+                    self._search_again = True
                     self._phase = Phase.FIND_NEXT_GOAL
                 # If there are still areas to search, define which one to search next
                 else:
@@ -256,10 +262,11 @@ class BaselineAgent(ArtificialBrain):
                         self._phase = Phase.PLAN_PATH_TO_ROOM
                     # Identify the closest door when the agent just searched another area
                     if self._current_door != None:
+                        closest_room = self._getClosestRoom(state, unsearched_rooms, self._current_door)
                         self._door = \
-                            state.get_room_doors(self._getClosestRoom(state, unsearched_rooms, self._current_door))[0]
+                            state.get_room_doors(closest_room)[0]
                         self._doormat = \
-                            state.get_room(self._getClosestRoom(state, unsearched_rooms, self._current_door))[-1][
+                            state.get_room(closest_room)[-1][
                                 'doormat']
                         if self._door['room_name'] == 'area 1':
                             self._doormat = (3, 5)
@@ -368,6 +375,16 @@ class BaselineAgent(ArtificialBrain):
                 agent_location = state[self.agent_id]['location']
                 # Identify which obstacle is blocking the entrance
                 for info in state.values():
+
+                    room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
+                    # If it is not the first iteration of searches, check if the area was claimed to have been searched by the human and decrease willingness
+                    if (('class_inheritance' in info and 'ObstacleObject' in info['class_inheritance']
+                            and self._search_again and self._searching_agent_area)
+                            and room_num not in self._penalised_rooms and not self._waiting):
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
+                        self._penalised_rooms.add(room_num)
+                        self._decrease_for_search(trustBeliefs)
+
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'rock' in info[
                         'obj_id']:
                         objects.append(info)
@@ -500,6 +517,7 @@ class BaselineAgent(ArtificialBrain):
                     self._waiting = False
                     self._phase = Phase.ENTER_ROOM
 
+
             if Phase.ENTER_ROOM == self._phase:
                 self._answered = False
 
@@ -558,9 +576,17 @@ class BaselineAgent(ArtificialBrain):
                     for info in state.values():
                         if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance']:
                             vic = str(info['img_name'][8:-4])
-                            # Remember which victim the agent found in this area
-                            if vic not in self._room_vics:
-                                self._room_vics.append(vic)
+
+                            room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
+                            # If this is not the first iteration of searches, check if the human visited here and reported the victims
+                            if self._search_again and self._searching_agent_area and room_num not in self._penalised_rooms:
+                                if vic in self._found_victims and 'room' in self._found_victim_logs[vic] and not self._waiting:
+                                    if 'healthy' not in vic: # If the victim was injured and not reported
+                                        self._victim_not_reported = True
+                                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
+                                        self._penalised_rooms.add(room_num)
+                                        self._decrease_for_search(trustBeliefs)
+
 
                             # Identify the exact location of the victim that was found by the human earlier
                             if vic in self._found_victims and 'location' not in self._found_victim_logs[vic].keys():
@@ -607,6 +633,19 @@ class BaselineAgent(ArtificialBrain):
                                         afstand - distance between us: ' + self._distance_human, 'RescueBot')
                                     self._waiting = True
                                     # Execute move actions to explore the area
+
+                    room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
+                    if self._search_again and self._searching_agent_area and not self._waiting \
+                            and room_num not in self._penalised_rooms:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
+
+                        self._penalised_rooms.add(room_num)
+                        if self._victim_not_reported:  # Decrease trust if an injured victim not reported
+                            self._decrease_for_search(trustBeliefs)
+                        else: # Increase trust if the room had no unreported injured victims
+                            self._increase_for_search(trustBeliefs)
+                        self._victim_not_reported = False
+
                     return action, {}
 
                 # Communicate that the agent did not find the target victim in the area while the human previously communicated the victim was located here
@@ -940,67 +979,72 @@ class BaselineAgent(ArtificialBrain):
                         trustBeliefs[self._human_name][task] = {'competence': competence, 'willingness': willingness, 'instances': instances}
         return trustBeliefs
 
+
     def _trustBelief(self, members, trustBeliefs, folder, receivedMessages):
         '''
-        Baseline implementation of a trust belief. Creates a dictionary with trust belief scores for each team member, for example based on the received messages.
+        Updates trust beliefs based on received messages.
         '''
-        # Update the trust value based on for example the received messages
-        print("Trust belief values: ", trustBeliefs)
+
         for message in receivedMessages:
+            # Store intent when human says they will search a room
+            if 'search' in message.lower():
+                room_num = int(''.join(filter(str.isdigit, message)))
+                try:
+                    room_num = int(room_num)
+                    if room_num not in self._pending_room_checks:
+                        self._pending_room_checks.add(room_num)
+                except ValueError:
+                    print(f"Warning: Invalid room number '{room_num}' received in message: {message}")
+
             # Increase agent trust in a team member that rescued a victim
-            if 'i will remove alone' in message.lower():
+            elif 'i will remove alone' in message.lower():
                 competence = trustBeliefs[self._human_name]['remove_objects']['competence']
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                competence = ((competence*instances) + (competence+0.1))/(instances+1)
-                willingness = ((willingness*instances) + (willingness+0.1))/(instances+1)
+                competence = ((competence * instances) + (competence + 0.1)) / (instances + 1)
+                willingness = ((willingness * instances) + (willingness + 0.1)) / (instances + 1)
+
                 print("Competence value: ", competence)
                 print("Willingness value: ", willingness)
+
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
-                trustBeliefs[self._human_name]['remove_objects']['competence'] = competence
-                # Restrict the competence belief to a range of -1 to 1
-                trustBeliefs[self._human_name]['remove_objects']['competence'] = np.clip(trustBeliefs[self._human_name]['remove_objects']['competence'], -1,
-                                                                       1)
-                # Restrict the willingness belief to a range of -1 to 1
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
-                                                                       1)
+                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(willingness, -1, 1)
+                trustBeliefs[self._human_name]['remove_objects']['competence'] = np.clip(competence, -1, 1)
+
             # Decrease willingness if the agent replies remove alone
             elif 'remove alone' in message.lower():
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                willingness = ((willingness*instances) + (willingness-0.1))/(instances+1)
+                willingness = ((willingness * instances) + (willingness - 0.1)) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
-                                                                       1)
+                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(willingness, -1, 1)
+
             # Increase willingness if agent replies remove together
             elif 'remove together' in message.lower():
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                willingness = ((willingness*instances) + (willingness+0.1))/(instances+1)
+                willingness = ((willingness * instances) + (willingness + 0.1)) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
-                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
-                                                                       1)
+                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(willingness, -1, 1)
+
             # Change competence when agent asks for help
             elif 'remove: at' in message.lower():
                 competence = trustBeliefs[self._human_name]['remove_objects']['competence']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                competence = ((competence*instances) + (competence+0.1))/(instances+1)
+                competence = ((competence * instances) + (competence + 0.1)) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
-                trustBeliefs[self._human_name]['remove_objects']['competence'] = competence
-                trustBeliefs[self._human_name]['remove_objects']['competence'] = np.clip(trustBeliefs[self._human_name]['remove_objects']['competence'], -1,
-                                                                       1)
-        # Save current trust belief values so we can later use and retrieve them to add to a csv file with all the logged trust belief values
+                trustBeliefs[self._human_name]['remove_objects']['competence'] = np.clip(competence, -1, 1)
+
+        # Save current trust belief values
         with open(folder + '/beliefs/currentTrustBelief.csv', mode='w') as csv_file:
             csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
             csv_writer.writerow(['name', 'task', 'competence', 'willingness', 'instances'])
             for task in self._tasks:
                 csv_writer.writerow([self._human_name, task, trustBeliefs[self._human_name][task]['competence'],
-                                 trustBeliefs[self._human_name][task]['willingness'], trustBeliefs[self._human_name][task]['instances']])
+                                     trustBeliefs[self._human_name][task]['willingness'], trustBeliefs[self._human_name][task]['instances']])
 
         return trustBeliefs
+
 
     def _send_message(self, mssg, sender):
         '''
@@ -1020,16 +1064,37 @@ class BaselineAgent(ArtificialBrain):
         '''
         agent_location = state[self.agent_id]['location']
         locs = {}
+
         for obj in objs:
             locs[obj] = state.get_room_doors(obj)[0]['location']
         dists = {}
+
+        # If this is not the first iteration of searches, first check the rooms claimed to be searched by the human
+        if self._search_again:
+            for room, loc in locs.items():
+                room_num = int(''.join(filter(str.isdigit, room)))
+                if room_num in self._pending_room_checks:
+                    if currentDoor is not None:
+                        dists[room] = utils.get_distance(currentDoor, loc)
+                    else:
+                        dists[room] = utils.get_distance(agent_location, loc)
+
+            if dists:
+                minRoom = min(dists, key=dists.get)
+                room_num = int(''.join(filter(str.isdigit, minRoom)))
+                self._pending_room_checks.remove(room_num)
+                self._searching_agent_area = True
+                return minRoom
+
         for room, loc in locs.items():
             if currentDoor != None:
                 dists[room] = utils.get_distance(currentDoor, loc)
             if currentDoor == None:
                 dists[room] = utils.get_distance(agent_location, loc)
 
+        self._searching_agent_area = False
         return min(dists, key=dists.get)
+
 
     def _efficientSearch(self, tiles):
         '''
@@ -1049,3 +1114,30 @@ class BaselineAgent(ArtificialBrain):
             else:
                 locs.append((x[i], max(y)))
         return locs
+
+    def _increase_for_search(self, trustBeliefs):
+        '''
+        Increases willingness because the human searched the room the claimed to have searched.
+        '''
+        print(f"Human searched room {int(''.join(filter(str.isdigit, self._door['room_name'])))}. Increasing willingness.")
+        willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
+        instances = trustBeliefs[self._human_name]['search_rooms']['instances']
+
+        willingness = ((willingness * instances) + (willingness + 0.1)) / (instances + 1)
+
+        trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
+        trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
+
+
+    def _decrease_for_search(self, trustBeliefs):
+        '''
+        Decreases willingness because the human didn't search the room the claimed to have searched.
+        '''
+        print(f"Human claimed they would search room {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
+        willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
+        instances = trustBeliefs[self._human_name]['search_rooms']['instances']
+
+        willingness = ((willingness * instances) + (willingness - 0.2)) / (instances + 1)
+
+        trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
+        trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
