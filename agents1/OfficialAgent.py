@@ -1,3 +1,4 @@
+import math
 import sys, random, enum, ast, time, csv
 import numpy as np
 from matrx import grid_world
@@ -580,7 +581,9 @@ class BaselineAgent(ArtificialBrain):
                             room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
                             # If this is not the first iteration of searches, check if the human visited here and reported the victims
                             if self._search_again and self._searching_agent_area and room_num not in self._penalised_rooms:
-                                if vic in self._found_victims and 'room' in self._found_victim_logs[vic] and not self._waiting:
+                                if ((vic not in self._found_victims or ('room' in self._found_victim_logs[vic] and
+                                                                       self._door['room_name'] != self._found_victim_logs[vic]['room']))
+                                        and not self._waiting):
                                     if 'healthy' not in vic: # If the victim was injured and not reported
                                         self._victim_not_reported = True
                                         trustBeliefs = self._loadBelief(self._team_members, self._folder)
@@ -654,6 +657,14 @@ class BaselineAgent(ArtificialBrain):
                     self._send_message(self._goal_vic + ' not present in ' + str(self._door[
                                                                                     'room_name']) + ' because I searched the whole area without finding ' + self._goal_vic + '.',
                                       'RescueBot')
+
+                    room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
+                    # If this is not the first iteration of searches, check if the human visited here and reported the victims
+                    if room_num not in self._penalised_rooms:
+                            trustBeliefs = self._loadBelief(self._team_members, self._folder)
+                            self._penalised_rooms.add(room_num)
+                            self._decrease_for_search(trustBeliefs, "Victim falsely reported at room ")
+
                     # Remove the victim location from memory
                     self._found_victim_logs.pop(self._goal_vic, None)
                     self._found_victims.remove(self._goal_vic)
@@ -863,7 +874,22 @@ class BaselineAgent(ArtificialBrain):
                 if msg.startswith("Search:"):
                     area = 'area ' + msg.split()[-1]
                     if area not in self._searched_rooms:
-                        self._searched_rooms.append(area)
+                        # According to willingness for search_room decide whether to add the room in searched or not
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
+
+                        willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
+
+                        if willingness >= 0:
+                            decision_threshold = 0.65 + 0.35 * willingness  # Linearly increase from 0.65 → 1.0
+                        else:
+                            decision_threshold = 0.65 + 0.5 * willingness  # Linearly decrease from 0.65 → 0.15
+
+                        if random.uniform(0, 1) < decision_threshold:
+                            print(f"Threshold: {decision_threshold}, adding room to searched rooms.")
+                            self._searched_rooms.append(area)
+                        else:
+                            print(f"Threshold: {decision_threshold}, not adding room to searched rooms.")
+
                 # If a received message involves team members finding victims, add these victims and their locations to memory
                 if msg.startswith("Found:"):
                     # Identify which victim and area it concerns
@@ -1129,11 +1155,11 @@ class BaselineAgent(ArtificialBrain):
         trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
 
 
-    def _decrease_for_search(self, trustBeliefs):
+    def _decrease_for_search(self, trustBeliefs, message = "Human claimed they would search room"):
         '''
         Decreases willingness because the human didn't search the room the claimed to have searched.
         '''
-        print(f"Human claimed they would search room {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
+        print(f"{message} {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
         willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
         instances = trustBeliefs[self._human_name]['search_rooms']['instances']
 

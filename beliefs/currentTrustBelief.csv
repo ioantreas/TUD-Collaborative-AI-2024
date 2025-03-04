@@ -1,3 +1,3 @@
 name;task;competence;willingness;instances
-spy;remove_objects;0.5;0.5;0
-spy;search_rooms;0.5;0.5;0
+spyfull;remove_objects;0.5;0.5;0
+spyfull;search_rooms;0.5;0.5;0
