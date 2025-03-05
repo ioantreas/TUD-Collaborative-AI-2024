@@ -764,17 +764,17 @@ class BaselineAgent(ArtificialBrain):
                                     self._waiting = True
                                     # Execute move actions to explore the area
 
-                    room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
-                    if self._search_again and self._searching_agent_area and not self._waiting \
-                            and room_num not in self._penalised_rooms:
-                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
-
-                        self._penalised_rooms.add(room_num)
-                        if self._victim_not_reported:  # Decrease trust if an injured victim not reported
-                            self._decrease_for_search(trustBeliefs)
-                        else: # Increase trust if the room had no unreported injured victims
-                            self._increase_for_search(trustBeliefs)
-                        self._victim_not_reported = False
+                    # room_num = int(''.join(filter(str.isdigit, self._door['room_name'])))
+                    # if self._search_again and self._searching_agent_area and not self._waiting \
+                    #         and room_num not in self._penalised_rooms:
+                    #     trustBeliefs = self._loadBelief(self._team_members, self._folder)
+                    #
+                    #     self._penalised_rooms.add(room_num)
+                    #     if self._victim_not_reported:  # Decrease trust if an injured victim not reported
+                    #         self._decrease_for_search(trustBeliefs)
+                    #     else: # Increase trust if the room had no unreported injured victims
+                    #         self._increase_for_search(trustBeliefs)
+                    #     self._victim_not_reported = False
 
                     return action, {}
 
@@ -1305,12 +1305,14 @@ class BaselineAgent(ArtificialBrain):
             if message in self._processed_messages:
                 continue
 
-            # Store intent when human says they will search a room
+            # Store intent when human says they will search a room and increase willingess
             if 'search' in message.lower():
                 room_num = int(''.join(filter(str.isdigit, message)))
                 try:
                     room_num = int(room_num)
                     if room_num not in self._pending_room_checks:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
+                        self._increase_for_search(trustBeliefs)
                         self._pending_room_checks.add(room_num)
                 except ValueError:
                     print(f"Warning: Invalid room number '{room_num}' received in message: {message}")
@@ -1514,7 +1516,7 @@ class BaselineAgent(ArtificialBrain):
         willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
         instances = trustBeliefs[self._human_name]['search_rooms']['instances']
 
-        willingness = ((willingness * instances) - 1) / (instances + 1)
+        willingness = ((willingness * instances) - 2) / (instances + 1)
 
         trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
         trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
