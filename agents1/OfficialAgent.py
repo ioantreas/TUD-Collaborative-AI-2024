@@ -1327,6 +1327,15 @@ class BaselineAgent(ArtificialBrain):
                 # Restrict the competence belief to a range of -1 to 1
                 trustBeliefs[self._human_name]['competence'] = np.clip(trustBeliefs[self._human_name]['competence'], -1,
                                                                        1)
+
+                willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
+                instances = trustBeliefs[self._human_name]['remove_objects']['instances']
+                willingness = ((willingness * instances) + 1) / (instances + 1)
+                trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
+                trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
+                    trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
+                    1)
+                
                 room = int(message.split(' ')[-1].strip())
                 self._allegedly_removed_obstacles.append(room)
                 self._processed_messages.append(message)
