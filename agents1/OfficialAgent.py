@@ -1344,7 +1344,7 @@ class BaselineAgent(ArtificialBrain):
                 self._processed_messages.append(message)
 
             # Increase willingness if agent replies remove together
-            elif 'remove alone' in message.lower():
+            elif 'remove together' in message.lower():
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
                 willingness = ((willingness * instances) + 1) / (instances + 1)
