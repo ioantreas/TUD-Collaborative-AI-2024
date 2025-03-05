@@ -631,7 +631,7 @@ class BaselineAgent(ArtificialBrain):
                     if self._person_is_coming and self._object_found:
                         willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                         instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                        trustBeliefs[self._human_name]['remove_objects']['willingness'] = ((willingness * instances) - 1) / (instances + 1)
+                        trustBeliefs[self._human_name]['remove_objects']['willingness'] = ((willingness * instances) + 1) / (instances + 1)
                         trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
                         self.save_to_file(trustBeliefs)
                     self._object_found = False
