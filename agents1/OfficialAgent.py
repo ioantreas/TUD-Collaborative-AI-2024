@@ -1250,6 +1250,7 @@ class BaselineAgent(ArtificialBrain):
         if self._first_tick:
             with open(folder + '/beliefs/allTrustBeliefs.csv') as csvfile:
                 reader = csv.reader(csvfile, delimiter=';', quotechar="'")
+                first_iter = True
                 for row in reader:
                     if trustfile_header == []:
                         trustfile_header = row
@@ -1257,16 +1258,17 @@ class BaselineAgent(ArtificialBrain):
                     # Retrieve trust values
                     if row and row[0] == self._human_name:
                         name = row[0]
+                        if first_iter:
+                            self._trustBeliefs[name] = {}
+                            first_iter = False
                         task = row[1]
                         competence = float(row[2])
                         willingness = float(row[3])
                         instances = int(row[4])
                         competence_instances = int(row[5])
-                        self._trustBeliefs[name] = {}
                         self._trustBeliefs[name]['competence'] = competence
                         self._trustBeliefs[name]['competence_instances'] = competence_instances
-                        for task in self._tasks:
-                            self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
+                        self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
                     # Initialize default trust values
                     if row and row[0] != self._human_name:
                         competence = default
