@@ -396,7 +396,7 @@ class BaselineAgent(ArtificialBrain):
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and allegedly_removed:
                         willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                         instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                        willingness = ((willingness * instances) - 1) / (instances + 1)
+                        willingness = ((willingness * instances) - 2) / (instances + 1)
                         trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                         trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
                             trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
@@ -1314,6 +1314,7 @@ class BaselineAgent(ArtificialBrain):
                         trustBeliefs = self._loadBelief(self._team_members, self._folder)
                         self._increase_for_search(trustBeliefs)
                         self._pending_room_checks.add(room_num)
+                        self._processed_messages.append(message)
                 except ValueError:
                     print(f"Warning: Invalid room number '{room_num}' received in message: {message}")
 
@@ -1531,5 +1532,5 @@ class BaselineAgent(ArtificialBrain):
 
             trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
             trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
-    
+
             self.save_to_file(trustBeliefs)
