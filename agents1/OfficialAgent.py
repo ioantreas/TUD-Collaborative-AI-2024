@@ -263,11 +263,10 @@ class BaselineAgent(ArtificialBrain):
                 else:
                     # Identify the closest door when the agent did not search any areas yet
                     if self._current_door == None:
+                        current_closest_room = self._getClosestRoom(state, unsearched_rooms, agent_location)
                         # Find all area entrance locations
-                        self._door = state.get_room_doors(self._getClosestRoom(state, unsearched_rooms, agent_location))[
-                            0]
-                        self._doormat = \
-                            state.get_room(self._getClosestRoom(state, unsearched_rooms, agent_location))[-1]['doormat']
+                        self._door = state.get_room_doors(current_closest_room)[0]
+                        self._doormat = state.get_room(current_closest_room)[-1]['doormat']
                         # Workaround for one area because of some bug
                         if self._door['room_name'] == 'area 1':
                             self._doormat = (3, 5)
