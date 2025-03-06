@@ -1373,13 +1373,14 @@ class BaselineAgent(ArtificialBrain):
             elif 'remove: at' in message.lower():
                 position = int(message.split("at", 1)[-1].strip())
                 closest_room = int(self._getClosestRoom(state, self._rooms, None).split(' ')[1].strip())
-                if position != closest_room or self._phase != Phase.REMOVE_OBSTACLE_IF_NEEDED:
+                if position != closest_room or self._phase != Phase.REMOVE_OBSTACLE_IF_NEEDED and self._phase != Phase.ENTER_ROOM:
                     continue
                 is_stone = False
                 for info in state.values():
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'stone' in info['obj_id']:
                         is_stone = True
                 if is_stone:
+                    print("Decreasing competence because you asked me to remove a stone")
                     competence = trustBeliefs[self._human_name]['competence']
                     competence_instances = trustBeliefs[self._human_name]['competence_instances']
                     competence = ((competence*competence_instances) - 1)/(competence_instances+1)
