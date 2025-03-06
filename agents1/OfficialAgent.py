@@ -451,14 +451,14 @@ class BaselineAgent(ArtificialBrain):
                                 self._send_message('Lets remove rock blocking ' + str(self._door['room_name']) + '!',
                                                   'RescueBot')
                                 return None, {}
-                        if self._processed_messages and self._processed_messages[-1] == f"Remove {str(self._door['room_name'])}" and self._waiting:
+                        if self._processed_messages and self._processed_messages[-1] == f"Remove {str(self._door['room_name'])}" and self._waiting and not state[{'is_human_agent': True}]:
                             time_passed = round((datetime.datetime.now() - self._initial_waiting_time).total_seconds(), 1)
                             threshold = 0
                             self._person_is_coming = True
                             if self._distance_human == 'far':
-                                threshold = 14
+                                threshold = 18
                             elif self._distance_human == 'close':
-                                threshold = 11
+                                threshold = 14
                             if time_passed > threshold:
                                 print("I am decreasing willingness because human is not coming")
                                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
@@ -589,9 +589,9 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 0
                                 self._person_is_coming = True
                                 if self._distance_human == 'far':
-                                    threshold = 12
+                                    threshold = 15
                                 elif self._distance_human == 'close':
-                                    threshold = 9
+                                    threshold = 12
                                 if time_passed > threshold:
                                     willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                     willingness -= 0.01
