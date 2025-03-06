@@ -1519,17 +1519,17 @@ class BaselineAgent(ArtificialBrain):
         self.save_to_file(trustBeliefs)
 
 
-def _decrease_for_search(self, trustBeliefs, message = "Human claimed they would search room"):
-        '''
-        Decreases willingness because the human didn't search the room the claimed to have searched.
-        '''
-        print(f"{message} {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
-        willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
-        instances = trustBeliefs[self._human_name]['search_rooms']['instances']
+    def _decrease_for_search(self, trustBeliefs, message = "Human claimed they would search room"):
+            '''
+            Decreases willingness because the human didn't search the room the claimed to have searched.
+            '''
+            print(f"{message} {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
+            willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
+            instances = trustBeliefs[self._human_name]['search_rooms']['instances']
 
-        willingness = ((willingness * instances) - 2) / (instances + 1)
+            willingness = ((willingness * instances) - 2) / (instances + 1)
 
-        trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
-        trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
-
-        self.save_to_file(trustBeliefs)
+            trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
+            trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
+    
+            self.save_to_file(trustBeliefs)
