@@ -961,12 +961,12 @@ class BaselineAgent(ArtificialBrain):
                                 else:
                                     return None, {}
                             if self._distance_human == 'far':
-                                threshold = 20
+                                threshold = 25
                             elif self._distance_human == 'close':
-                                threshold = 16
+                                threshold = 21
                             if time_passed > threshold and 'critical' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
-                                willingness -= 0.005
+                                willingness -= 0.001
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
