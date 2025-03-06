@@ -981,6 +981,7 @@ class BaselineAgent(ArtificialBrain):
                                     self._waiting = False
                                     self._phase = Phase.PICK_UNSEARCHED_ROOM
                                     self._to_search.append(self._door['room_name'])
+                                    self._found_victims.remove(self._goal_vic)
                                     self._goal_vic = None
                                     self._goal_loc = None
                                     self._moving = False

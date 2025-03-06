@@ -1,9 +1,1 @@
-<<<<<<< HEAD
-name;task;competence;willingness;instances;competence_instancesdora;remove_objects;0;0.0;0;0dora;rescue_mild;0;0;0;0dora;rescue_critical;0;0;0;0dora;search_rooms;0;0.0;0;0
-=======
-name;task;competence;willingness;instances;competence_instances
-ben;remove_objects;0.0;0.0;0;0
-ben;rescue_mild;0.0;0.0;0;0
-ben;rescue_critical;0.0;0.0;0;0
-ben;search_rooms;0.0;0.9628099173553719;242;0
->>>>>>> 6bec0b0ff392b8f86e89458b7732b28db8caf3ce
+name;task;competence;willingness;instances;competence_instancesdora;remove_objects;0;0.0;0;0dora;rescue_mild;0;0.0;0;0dora;rescue_critical;0;0;0;0dora;search_rooms;0;0.0;0;0
