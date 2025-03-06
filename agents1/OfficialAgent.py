@@ -1516,8 +1516,10 @@ class BaselineAgent(ArtificialBrain):
         trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
         trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
 
+        self.save_to_file(trustBeliefs)
 
-    def _decrease_for_search(self, trustBeliefs, message = "Human claimed they would search room"):
+
+def _decrease_for_search(self, trustBeliefs, message = "Human claimed they would search room"):
         '''
         Decreases willingness because the human didn't search the room the claimed to have searched.
         '''
@@ -1529,3 +1531,5 @@ class BaselineAgent(ArtificialBrain):
 
         trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
         trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
+
+        self.save_to_file(trustBeliefs)
