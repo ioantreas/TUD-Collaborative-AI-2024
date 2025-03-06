@@ -897,7 +897,6 @@ class BaselineAgent(ArtificialBrain):
                     self._phase = Phase.TAKE_VICTIM
 
             if Phase.TAKE_VICTIM == self._phase:
-                print("Taking victim")
                 # Store all area tiles in a list
                 room_tiles = [info['location'] for info in state.values()
                               if 'class_inheritance' in info
@@ -1068,7 +1067,8 @@ class BaselineAgent(ArtificialBrain):
         for info in state.values():
             if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance']:
                 vic = str(info['img_name'][8:-4])
-                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower():
+                agent_location = state[self.agent_id]['location']
+                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._goal_locations.values():
                     willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
                     willingness = ((willingness * instances) - 1) / (instances + 1)
