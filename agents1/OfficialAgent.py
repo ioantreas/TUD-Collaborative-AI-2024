@@ -1262,9 +1262,11 @@ class BaselineAgent(ArtificialBrain):
                         willingness = float(row[3])
                         instances = int(row[4])
                         competence_instances = int(row[5])
+                        self._trustBeliefs[name] = {}
                         self._trustBeliefs[name]['competence'] = competence
                         self._trustBeliefs[name]['competence_instances'] = competence_instances
-                        self._trustBeliefs[name][task] = {'willingness': willingness, 'instances': instances}
+                        for task in self._tasks:
+                            self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
                     # Initialize default trust values
                     if row and row[0] != self._human_name:
                         competence = default
