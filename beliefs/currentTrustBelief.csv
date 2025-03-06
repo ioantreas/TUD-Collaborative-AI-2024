@@ -1,1 +1,5 @@
-name;task;competence;willingness;instances;competence_instancesdora;remove_objects;0;0.0;0;0dora;rescue_mild;0;0.0;0;0dora;rescue_critical;0;0;0;0dora;search_rooms;0;0.0;0;0
+name;task;competence;willingness;instances;competence_instances
+dora;remove_objects;0.0;0.0;0;0
+dora;rescue_mild;0.0;0.0;0;0
+dora;rescue_critical;0.0;0.0;0;0
+dora;search_rooms;0.0;0.0;0;0
