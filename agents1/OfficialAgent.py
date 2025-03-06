@@ -1402,7 +1402,7 @@ class BaselineAgent(ArtificialBrain):
                     willingness = ((willingness * instances) - 1) / (instances + 1)
                     trustBeliefs[self._human_name]['rescue_mild']['instances'] += 1
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
-                    trustBeliefs[self._human_name]['remove_mild']['willingness'] = np.clip(
+                    trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
                         trustBeliefs[self._human_name]['rescue_mild']['willingness'], -1,
                         1)
                 self._processed_messages.append(message)
