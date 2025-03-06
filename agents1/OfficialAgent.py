@@ -91,6 +91,7 @@ class BaselineAgent(ArtificialBrain):
         self._penalised_rooms = set()
         self._person_is_coming = False
         self._object_found = False
+        self._agent_asked_for_removal = False
 
     def initialize(self):
         # Initialization of the state tracker and navigation algorithm
@@ -622,6 +623,19 @@ class BaselineAgent(ArtificialBrain):
                         elif not self._ask_human:
                             self._send_message('Removing stones blocking ' + str(self._door['room_name']) + '.',
                                                'RescueBot')
+                            if self._agent_asked_for_removal:
+                                print("Agent asked for removal of stones, so decreasing competence")
+                                competence = trustBeliefs[self._human_name]['competence']
+                                competence_instances = trustBeliefs[self._human_name]['competence_instances']
+                                competence = ((competence * competence_instances) - 1) / (competence_instances + 1)
+                                trustBeliefs[self._human_name]['competence_instances'] += 1
+                                trustBeliefs[self._human_name]['competence'] = competence
+                                trustBeliefs[self._human_name]['competence'] = np.clip(
+                                    trustBeliefs[self._human_name]['competence'], -1,
+                                    1)
+                                self._agent_asked_for_removal = False
+                                self.save_to_file(trustBeliefs)
+                            print("In here")
                             self._phase = Phase.ENTER_ROOM
                             self._ask_human = None
                             return RemoveObject.__name__, {'object_id': info['obj_id']}
@@ -1371,23 +1385,7 @@ class BaselineAgent(ArtificialBrain):
                 
             # Change competence when agent asks for help
             elif 'remove: at' in message.lower():
-                position = int(message.split("at", 1)[-1].strip())
-                closest_room = int(self._getClosestRoom(state, self._rooms, None).split(' ')[1].strip())
-                if position != closest_room or self._phase != Phase.REMOVE_OBSTACLE_IF_NEEDED and self._phase != Phase.ENTER_ROOM:
-                    continue
-                is_stone = False
-                for info in state.values():
-                    if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'stone' in info['obj_id']:
-                        is_stone = True
-                if is_stone:
-                    print("Decreasing competence because you asked me to remove a stone")
-                    competence = trustBeliefs[self._human_name]['competence']
-                    competence_instances = trustBeliefs[self._human_name]['competence_instances']
-                    competence = ((competence*competence_instances) - 1)/(competence_instances+1)
-                    trustBeliefs[self._human_name]['competence_instances'] += 1
-                    trustBeliefs[self._human_name]['competence'] = competence
-                    trustBeliefs[self._human_name]['competence'] = np.clip(trustBeliefs[self._human_name]['competence'], -1,
-                                                                           1)
+                self._agent_asked_for_removal = True
                 self._processed_messages.append(message)
             if 'mildly injured' in message.lower() and 'collect' in message.lower():
                 competence = trustBeliefs[self._human_name]['competence']
