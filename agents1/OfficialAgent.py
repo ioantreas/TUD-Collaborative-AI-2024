@@ -1316,7 +1316,8 @@ class BaselineAgent(ArtificialBrain):
                         self._trustBeliefs[name]['competence_instances'] = competence_instances
                         self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
                     # Initialize default trust values
-                    if row and row[0] != self._human_name:
+                    if row and row[0] != self._human_name and first_iter:
+                        print("Reached")
                         competence = random.uniform(-1, 1)
                         willingness = random.uniform(-1, 1)
                         instances = 0
