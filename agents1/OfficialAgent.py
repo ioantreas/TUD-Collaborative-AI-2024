@@ -462,7 +462,8 @@ class BaselineAgent(ArtificialBrain):
                             if time_passed > threshold:
                                 print("I am decreasing willingness because human is not coming")
                                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
-                                willingness -= 0.005
+                                instances = trustBeliefs[self._human_name]['remove_objects']['instances']
+                                willingness -= 0.005 / instances
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -594,7 +595,8 @@ class BaselineAgent(ArtificialBrain):
                                     threshold = 20
                                 if time_passed > threshold:
                                     willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
-                                    willingness -= 0.005
+                                    instances = trustBeliefs[self._human_name]['remove_objects']['instances']
+                                    willingness -= 0.005 / instances
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                     # Restrict the willingness belief to a range of -1 to 1
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -950,7 +952,8 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 21
                             if time_passed > threshold and 'mild' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
-                                willingness -= 0.005
+                                instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
+                                willingness -= 0.005 / instances
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -979,7 +982,8 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 21
                             if time_passed > threshold and 'critical' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
-                                willingness -= 0.005
+                                instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
+                                willingness -= 0.005 / instances
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
@@ -1044,6 +1048,7 @@ class BaselineAgent(ArtificialBrain):
                     self._carrying = True
                     return CarryObject.__name__, {'object_id': self._found_victim_logs[self._goal_vic]['obj_id'],
                                                   'human_name': self._human_name}
+                return None, {}
 
             if Phase.PLAN_PATH_TO_DROPPOINT == self._phase:
                 self._navigator.reset_full()
@@ -1101,16 +1106,16 @@ class BaselineAgent(ArtificialBrain):
                         'object_id': info['obj_id'],
                         'human_name': self._human_name}
 
-                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'critically' in vic.lower():
-                    willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
-                    instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                    willingness = ((willingness * instances) - 1) / (instances + 1)
-                    trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
-                    trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
-                    trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
-                        trustBeliefs[self._human_name]['rescue_critical']['willingness'], -1,
-                        1)
-                    self.save_to_file(trustBeliefs)
+                # if vic in self._collected_victims and vic not in self._rescued_by_robot and 'critically' in vic.lower() and agent_location not in self._goal_locations.values() :
+                #     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
+                #     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
+                #     willingness = ((willingness * instances) - 1) / (instances + 1)
+                #     trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
+                #     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
+                #     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
+                #         trustBeliefs[self._human_name]['rescue_critical']['willingness'], -1,
+                #         1)
+                #     self.save_to_file(trustBeliefs)
 
     def save_to_file(self, trustBeliefs):
         # Save current trust belief values so we can later use and retrieve them to add to a csv file with all the logged trust belief values
