@@ -1,5 +1,1 @@
-name;task;competence;willingness;instances;competence_instances
-dora;remove_objects;1.0;0.34988148148148285;15;5
-dora;rescue_mild;1.0;0.4452525252525264;10;5
-dora;rescue_critical;1.0;-0.8064516129032258;31;5
-dora;search_rooms;1.0;1.0;10;5
+name;task;competence;willingness;instances;competence_instancesdora;remove_objects;0.8181818181818182;0.287152772386804;21;11dora;rescue_mild;0.8181818181818182;-0.19699706720295013;19;11dora;rescue_critical;0.8181818181818182;-0.9553513513513514;185;11dora;search_rooms;0.8181818181818182;0.8125;16;11
