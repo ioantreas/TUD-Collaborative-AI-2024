@@ -118,6 +118,9 @@ class BaselineAgent(ArtificialBrain):
         self._process_messages(state, self._team_members, self._condition)
         # Initialize and update trust beliefs for team members
         trustBeliefs = self._loadBelief(self._team_members, self._folder)
+        # print("Competence: ", trustBeliefs[self._human_name]['competence'])
+        # for task in self._tasks:
+        #     print(f"{task}: ", trustBelieefs[self._human_name][task]['willingness'])
         self._trustBelief(self._team_members, trustBeliefs, self._received_messages, state)
 
         # Check whether human is close in distance
@@ -1272,7 +1275,7 @@ class BaselineAgent(ArtificialBrain):
         Loads trust belief values if agent already collaborated with human before, otherwise trust belief values are initialized using default values.
         '''
         # Set a default starting trust value
-        default = 0.0
+        default = -1.0
         trustfile_header = []
         trustfile_contents = []
         # Check if agent already collaborated with this human before, if yes: load the corresponding trust values, if no: initialize using default trust values
