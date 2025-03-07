@@ -119,6 +119,9 @@ class BaselineAgent(ArtificialBrain):
         self._process_messages(state, self._team_members, self._condition)
         # Initialize and update trust beliefs for team members
         trustBeliefs = self._loadBelief(self._team_members, self._folder)
+        # print("Competence: ", trustBeliefs[self._human_name]['competence'])
+        # for task in self._tasks:
+        #     print(f"{task}: ", trustBeliefs[self._human_name][task]['willingness'])
         self._trustBelief(self._team_members, trustBeliefs, self._received_messages, state)
 
         # Check whether human is close in distance
@@ -398,6 +401,7 @@ class BaselineAgent(ArtificialBrain):
                 # Identify which obstacle is blocking the entrance
                 for info in state.values():
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and allegedly_removed:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
                         willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                         instances = trustBeliefs[self._human_name]['remove_objects']['instances']
                         willingness = ((willingness * instances) - 2) / (instances + 1)
@@ -465,9 +469,10 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 21
                             if time_passed > threshold:
                                 print("I am decreasing willingness because human is not coming")
+                                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                                willingness -= 0.005 / (instances + 1)
+                                # willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -598,9 +603,10 @@ class BaselineAgent(ArtificialBrain):
                                 elif self._distance_human == 'close':
                                     threshold = 20
                                 if time_passed > threshold:
+                                    trustBeliefs = self._loadBelief(self._team_members, self._folder)
                                     willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                     instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                                    willingness -= 0.005 / (instances + 1)
+                                    # willingness -= 0.005 / (instances + 1)
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                     # Restrict the willingness belief to a range of -1 to 1
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -631,9 +637,10 @@ class BaselineAgent(ArtificialBrain):
                                                'RescueBot')
                             if self._agent_asked_for_removal:
                                 print("Agent asked for removal of stones, so decreasing competence")
+                                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                                 competence = trustBeliefs[self._human_name]['competence']
                                 competence_instances = trustBeliefs[self._human_name]['competence_instances']
-                                competence = ((competence * competence_instances) - 1) / (competence_instances + 1)
+                                # competence = ((competence * competence_instances) - 1) / (competence_instances + 1)
                                 trustBeliefs[self._human_name]['competence_instances'] += 1
                                 trustBeliefs[self._human_name]['competence'] = competence
                                 trustBeliefs[self._human_name]['competence'] = np.clip(
@@ -648,9 +655,10 @@ class BaselineAgent(ArtificialBrain):
                 # If no obstacles are blocking the entrance, enter the area
                 if len(objects) == 0:
                     if self._person_is_coming and self._object_found:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
                         willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                         instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                        trustBeliefs[self._human_name]['remove_objects']['willingness'] = ((willingness * instances) + 1) / (instances + 1)
+                        # trustBeliefs[self._human_name]['remove_objects']['willingness'] = ((willingness * instances) + 1) / (instances + 1)
                         trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
                         self.save_to_file(trustBeliefs)
                     self._object_found = False
@@ -965,9 +973,10 @@ class BaselineAgent(ArtificialBrain):
                             elif self._distance_human == 'close':
                                 threshold = 21
                             if time_passed > threshold and 'mild' in info['obj_id']:
+                                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
-                                willingness -= 0.005 / (instances + 1)
+                                # willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -995,9 +1004,10 @@ class BaselineAgent(ArtificialBrain):
                             elif self._distance_human == 'close':
                                 threshold = 21
                             if time_passed > threshold and 'critical' in info['obj_id']:
+                                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                                willingness -= 0.005 / (instances + 1)
+                                # willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
@@ -1029,19 +1039,21 @@ class BaselineAgent(ArtificialBrain):
                 if len(objects) == 0 and 'critical' in self._goal_vic or len(
                         objects) == 0 and 'mild' in self._goal_vic and self._rescue == 'together':
                     if 'mild' in self._goal_vic:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
                         willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                         instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
                         willingness = ((willingness * instances) + 1) / (instances + 1)
-                        trustBeliefs[self._human_name]['rescue_mild']['instances'] += 1
+                        # trustBeliefs[self._human_name]['rescue_mild']['instances'] += 1
                         trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                         trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
                             trustBeliefs[self._human_name]['rescue_mild']['willingness'], -1,
                             1)
                         self.save_to_file(trustBeliefs)
                     if 'critical' in self._goal_vic:
+                        trustBeliefs = self._loadBelief(self._team_members, self._folder)
                         willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                         instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                        willingness = ((willingness * instances) + 1) / (instances + 1)
+                        # willingness = ((willingness * instances) + 1) / (instances + 1)
                         trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
                         trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                         trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
@@ -1102,9 +1114,10 @@ class BaselineAgent(ArtificialBrain):
                 vic = str(info['img_name'][8:-4])
                 agent_location = state[self.agent_id]['location']
                 if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._forbidden_coords:
+                    trustBeliefs = self._loadBelief(self._team_members, self._folder)
                     willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
-                    willingness = ((willingness * instances) - 1) / (instances + 1)
+                    # willingness = ((willingness * instances) - 1) / (instances + 1)
                     trustBeliefs[self._human_name]['rescue_mild']['instances'] += 1
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -1132,14 +1145,15 @@ class BaselineAgent(ArtificialBrain):
                 #     self.save_to_file(trustBeliefs)
 
     def save_to_file(self, trustBeliefs):
-        # Save current trust belief values so we can later use and retrieve them to add to a csv file with all the logged trust belief values
-        with open(self._folder + '/beliefs/currentTrustBelief.csv', mode='w') as csv_file:
-            csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-            csv_writer.writerow(['name', 'task', 'competence', 'willingness', 'instances', 'competence_instances'])
-            for task in self._tasks:
-                csv_writer.writerow([self._human_name, task, trustBeliefs[self._human_name]['competence'],
-                                 trustBeliefs[self._human_name][task]['willingness'], trustBeliefs[self._human_name][task]['instances'],
-                                     trustBeliefs[self._human_name]['competence_instances']])
+        pass
+        # # Save current trust belief values so we can later use and retrieve them to add to a csv file with all the logged trust belief values
+        # with open(self._folder + '/beliefs/currentTrustBelief.csv', mode='w') as csv_file:
+        #     csv_writer = csv.writer(csv_file, delimiter=';', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        #     csv_writer.writerow(['name', 'task', 'competence', 'willingness', 'instances', 'competence_instances'])
+        #     for task in self._tasks:
+        #         csv_writer.writerow([self._human_name, task, trustBeliefs[self._human_name]['competence'],
+        #                          trustBeliefs[self._human_name][task]['willingness'], trustBeliefs[self._human_name][task]['instances'],
+        #                              trustBeliefs[self._human_name]['competence_instances']])
 
     def _get_drop_zones(self, state):
         '''
@@ -1275,7 +1289,7 @@ class BaselineAgent(ArtificialBrain):
         Loads trust belief values if agent already collaborated with human before, otherwise trust belief values are initialized using default values.
         '''
         # Set a default starting trust value
-        default = 0.0
+        default = -1.0
         trustfile_header = []
         trustfile_contents = []
         # Check if agent already collaborated with this human before, if yes: load the corresponding trust values, if no: initialize using default trust values
@@ -1302,16 +1316,17 @@ class BaselineAgent(ArtificialBrain):
                         self._trustBeliefs[name]['competence_instances'] = competence_instances
                         self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
                     # Initialize default trust values
-                    if row and row[0] != self._human_name:
-                        competence = default
-                        willingness = default
+                    if row and row[0] != self._human_name and first_iter:
+                        print("Reached")
+                        competence = random.uniform(-1, 1)
+                        willingness = random.uniform(-1, 1)
                         instances = 0
                         competence_instances = 0
                         self._trustBeliefs[self._human_name] = {}
                         self._trustBeliefs[self._human_name]['competence'] = competence
                         self._trustBeliefs[self._human_name]['competence_instances'] = competence_instances
                         for task in self._tasks:
-                            self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
+                            self._trustBeliefs[self._human_name][task] = {'willingness':  random.uniform(-1, 1), 'instances': instances}
             self._first_tick = False
         else:
             with open(folder + '/beliefs/currentTrustBelief.csv') as csvfile:
@@ -1357,9 +1372,10 @@ class BaselineAgent(ArtificialBrain):
 
             # Increase agent trust in a team member that rescued a victim
             elif 'i will remove alone' in message.lower():
+                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                 competence = trustBeliefs[self._human_name]['competence']
                 competence_instances = trustBeliefs[self._human_name]['competence_instances']
-                competence = ((competence*competence_instances) + 1)/(competence_instances+1)
+                # competence = ((competence*competence_instances) + 1)/(competence_instances+1)
                 trustBeliefs[self._human_name]['competence'] = competence
                 trustBeliefs[self._human_name]['competence_instances'] += 1
                 # Restrict the competence belief to a range of -1 to 1
@@ -1368,7 +1384,7 @@ class BaselineAgent(ArtificialBrain):
 
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                willingness = ((willingness * instances) + 1) / (instances + 1)
+                # willingness = ((willingness * instances) + 1) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
                     trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
@@ -1380,9 +1396,10 @@ class BaselineAgent(ArtificialBrain):
 
             # Decrease willingness if the agent replies remove alone
             elif 'remove alone' in message.lower():
+                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                willingness = ((willingness * instances) - 1) / (instances + 1)
+                # willingness = ((willingness * instances) - 1) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
 
                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
@@ -1392,9 +1409,10 @@ class BaselineAgent(ArtificialBrain):
 
             # Increase willingness if agent replies remove together
             elif 'remove together' in message.lower():
+                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                willingness = ((willingness * instances) + 1) / (instances + 1)
+                # willingness = ((willingness * instances) + 1) / (instances + 1)
                 trustBeliefs[self._human_name]['remove_objects']['instances'] += 1
 
                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
@@ -1407,9 +1425,10 @@ class BaselineAgent(ArtificialBrain):
                 self._agent_asked_for_removal = True
                 self._processed_messages.append(message)
             if 'mildly injured' in message.lower() and 'collect' in message.lower():
+                trustBeliefs = self._loadBelief(self._team_members, self._folder)
                 competence = trustBeliefs[self._human_name]['competence']
                 competence_instances = trustBeliefs[self._human_name]['competence_instances']
-                competence = ((competence * competence_instances) + 1) / (competence_instances + 1)
+                # competence = ((competence * competence_instances) + 1) / (competence_instances + 1)
                 trustBeliefs[self._human_name]['competence'] = competence
                 trustBeliefs[self._human_name]['competence_instances'] += 1
                 # Restrict the competence belief to a range of -1 to 1
@@ -1417,7 +1436,7 @@ class BaselineAgent(ArtificialBrain):
                                                                        1)
                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                 instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
-                willingness = ((willingness * instances) + 1) / (instances + 1)
+                # willingness = ((willingness * instances) + 1) / (instances + 1)
                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'], -1,
@@ -1427,9 +1446,10 @@ class BaselineAgent(ArtificialBrain):
                 self._processed_messages.append(message)
             if 'mildly injured' in self._send_messages[-1].lower() and len(self._send_messages) > 1:
                 if 'rescue alone' in message.lower():
+                    trustBeliefs = self._loadBelief(self._team_members, self._folder)
                     willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
-                    willingness = ((willingness * instances) - 1) / (instances + 1)
+                    # willingness = ((willingness * instances) - 1) / (instances + 1)
                     trustBeliefs[self._human_name]['rescue_mild']['instances'] += 1
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                     trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -1439,9 +1459,10 @@ class BaselineAgent(ArtificialBrain):
 
             if 'critically injured' in self._send_messages[-1].lower() and len(self._send_messages) > 1:
                 if 'continue' in message.lower():
+                    trustBeliefs = self._loadBelief(self._team_members, self._folder)
                     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                    willingness = ((willingness * instances) - 1) / (instances + 1)
+                    # willingness = ((willingness * instances) - 1) / (instances + 1)
                     trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
                     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                     trustBeliefs[self._human_name][('rescue_critical')]['willingness'] = np.clip(
@@ -1449,9 +1470,10 @@ class BaselineAgent(ArtificialBrain):
                         1)
 
                 if 'rescue' in message.lower():
+                    trustBeliefs = self._loadBelief(self._team_members, self._folder)
                     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                    willingness = ((willingness * instances) + 1) / (instances + 1)
+                    # willingness = ((willingness * instances) + 1) / (instances + 1)
                     trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
                     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
@@ -1538,10 +1560,11 @@ class BaselineAgent(ArtificialBrain):
         Increases willingness because the human searched the room the claimed to have searched.
         '''
         print(f"Human searched room {int(''.join(filter(str.isdigit, self._door['room_name'])))}. Increasing willingness.")
+        trustBeliefs = self._loadBelief(self._team_members, self._folder)
         willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
         instances = trustBeliefs[self._human_name]['search_rooms']['instances']
 
-        willingness = ((willingness * instances) + 1) / (instances + 1)
+        # willingness = ((willingness * instances) + 1) / (instances + 1)
 
         trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
         trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)
@@ -1554,10 +1577,11 @@ class BaselineAgent(ArtificialBrain):
             Decreases willingness because the human didn't search the room the claimed to have searched.
             '''
             print(f"{message} {int(''.join(filter(str.isdigit, self._door['room_name'])))}, but did not. Decreasing willingness.")
+            trustBeliefs = self._loadBelief(self._team_members, self._folder)
             willingness = trustBeliefs[self._human_name]['search_rooms']['willingness']
             instances = trustBeliefs[self._human_name]['search_rooms']['instances']
 
-            willingness = ((willingness * instances) - 2) / (instances + 1)
+            # willingness = ((willingness * instances) - 2) / (instances + 1)
 
             trustBeliefs[self._human_name]['search_rooms']['instances'] += 1
             trustBeliefs[self._human_name]['search_rooms']['willingness'] = np.clip(willingness, -1, 1)

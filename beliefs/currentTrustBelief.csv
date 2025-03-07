@@ -1,5 +1,1 @@
-name;task;competence;willingness;instances;competence_instances
-alice;remove_objects;1.0;1.0;0;1
-alice;rescue_mild;1.0;0.0;0;1
-alice;rescue_critical;1.0;0.0;0;1
-alice;search_rooms;1.0;1.0;1;1
+name;task;competence;willingness;instances;competence_instances
