@@ -92,6 +92,7 @@ class BaselineAgent(ArtificialBrain):
         self._person_is_coming = False
         self._object_found = False
         self._agent_asked_for_removal = False
+        self._forbidden_coords = None
 
     def initialize(self):
         # Initialization of the state tracker and navigation algorithm
@@ -118,9 +119,9 @@ class BaselineAgent(ArtificialBrain):
         self._process_messages(state, self._team_members, self._condition)
         # Initialize and update trust beliefs for team members
         trustBeliefs = self._loadBelief(self._team_members, self._folder)
-        # print("Competence: ", trustBeliefs[self._human_name]['competence'])
-        # for task in self._tasks:
-        #     print(f"{task}: ", trustBelieefs[self._human_name][task]['willingness'])
+        print("Competence: ", trustBeliefs[self._human_name]['competence'])
+        for task in self._tasks:
+            print(f"{task}: ", trustBeliefs[self._human_name][task]['willingness'])
         self._trustBelief(self._team_members, trustBeliefs, self._received_messages, state)
 
         # Check whether human is close in distance
@@ -196,6 +197,9 @@ class BaselineAgent(ArtificialBrain):
                         remaining_vics.append(str(info['img_name'])[8:-4])
                         remaining[str(info['img_name'])[8:-4]] = info['location']
                     self._goal_locations[str(info['img_name'])[8:-4]] = info['location']
+                    self._forbidden_coords = set(self._goal_locations.values())
+                    for x, y in self._goal_locations.values():
+                        self._forbidden_coords.update([(x - 1, y), (x, y + 1), (x, y - 1)])
                 if remaining_zones:
                     self._remainingZones = remaining_zones
                     self._remaining = remaining
@@ -769,13 +773,23 @@ class BaselineAgent(ArtificialBrain):
                                                                 'obj_id': info['obj_id']}
                                 # Communicate which victim the agent found and ask the human whether to rescue the victim now or at a later stage
                                 if 'mild' in vic and self._answered == False and not self._waiting:
-                                    self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue together", "Rescue alone", or "Continue" searching. \n \n \
-                                        Important features to consider are: \n safe - victims rescued: ' + str(
-                                        self._collected_victims) + '\n explore - areas searched: area ' + str(
-                                        self._searched_rooms).replace('area ', '') + '\n \
-                                        clock - extra time when rescuing alone: 15 seconds \n afstand - distance between us: ' + self._distance_human,
-                                                      'RescueBot')
-                                    self._waiting = True
+                                    competence = trustBeliefs[self._human_name]['competence']
+                                    decision_threshold = (1 + competence) / 4
+                                    if random.uniform(0, 1) < decision_threshold:
+                                        self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Since your competence is high, I will let you come pick it up.', 'RescueBot')
+                                        self._answered = True
+                                        self._waiting = False
+                                        self._todo.append(self._recent_vic)
+                                        self._recent_vic = None
+                                        self._phase = Phase.FIND_NEXT_GOAL
+                                    else:
+                                        self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue together", "Rescue alone", or "Continue" searching. \n \n \
+                                            Important features to consider are: \n safe - victims rescued: ' + str(
+                                            self._collected_victims) + '\n explore - areas searched: area ' + str(
+                                            self._searched_rooms).replace('area ', '') + '\n \
+                                            clock - extra time when rescuing alone: 15 seconds \n afstand - distance between us: ' + self._distance_human,
+                                                          'RescueBot')
+                                        self._waiting = True
 
                                 if 'critical' in vic and self._answered == False and not self._waiting:
                                     self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue" or "Continue" searching. \n\n \
@@ -1099,7 +1113,7 @@ class BaselineAgent(ArtificialBrain):
             if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance']:
                 vic = str(info['img_name'][8:-4])
                 agent_location = state[self.agent_id]['location']
-                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._goal_locations.values():
+                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._forbidden_coords:
                     trustBeliefs = self._loadBelief(self._team_members, self._folder)
                     willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
@@ -1275,7 +1289,7 @@ class BaselineAgent(ArtificialBrain):
         Loads trust belief values if agent already collaborated with human before, otherwise trust belief values are initialized using default values.
         '''
         # Set a default starting trust value
-        default = -1.0
+        default = 1.0
         trustfile_header = []
         trustfile_contents = []
         # Check if agent already collaborated with this human before, if yes: load the corresponding trust values, if no: initialize using default trust values
