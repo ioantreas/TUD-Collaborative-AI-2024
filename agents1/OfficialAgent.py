@@ -263,11 +263,10 @@ class BaselineAgent(ArtificialBrain):
                 else:
                     # Identify the closest door when the agent did not search any areas yet
                     if self._current_door == None:
+                        current_closest_room = self._getClosestRoom(state, unsearched_rooms, agent_location)
                         # Find all area entrance locations
-                        self._door = state.get_room_doors(self._getClosestRoom(state, unsearched_rooms, agent_location))[
-                            0]
-                        self._doormat = \
-                            state.get_room(self._getClosestRoom(state, unsearched_rooms, agent_location))[-1]['doormat']
+                        self._door = state.get_room_doors(current_closest_room)[0]
+                        self._doormat = state.get_room(current_closest_room)[-1]['doormat']
                         # Workaround for one area because of some bug
                         if self._door['room_name'] == 'area 1':
                             self._doormat = (3, 5)
@@ -456,9 +455,9 @@ class BaselineAgent(ArtificialBrain):
                             threshold = 0
                             self._person_is_coming = True
                             if self._distance_human == 'far':
-                                threshold = 18
+                                threshold = 25
                             elif self._distance_human == 'close':
-                                threshold = 14
+                                threshold = 21
                             if time_passed > threshold:
                                 print("I am decreasing willingness because human is not coming")
                                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
@@ -589,9 +588,9 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 0
                                 self._person_is_coming = True
                                 if self._distance_human == 'far':
-                                    threshold = 15
+                                    threshold = 23
                                 elif self._distance_human == 'close':
-                                    threshold = 12
+                                    threshold = 20
                                 if time_passed > threshold:
                                     willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                     willingness -= 0.005
@@ -932,12 +931,12 @@ class BaselineAgent(ArtificialBrain):
                                 time_passed = 0
                             threshold = 0
                             if self._distance_human == 'far':
-                                threshold = 16
+                                threshold = 25
                             elif self._distance_human == 'close':
-                                threshold = 13
+                                threshold = 21
                             if time_passed > threshold and 'mild' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
-                                willingness -= 0.01
+                                willingness -= 0.005
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -961,9 +960,9 @@ class BaselineAgent(ArtificialBrain):
                                 else:
                                     return None, {}
                             if self._distance_human == 'far':
-                                threshold = 20
+                                threshold = 25
                             elif self._distance_human == 'close':
-                                threshold = 16
+                                threshold = 21
                             if time_passed > threshold and 'critical' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                                 willingness -= 0.005
@@ -1250,6 +1249,7 @@ class BaselineAgent(ArtificialBrain):
         if self._first_tick:
             with open(folder + '/beliefs/allTrustBeliefs.csv') as csvfile:
                 reader = csv.reader(csvfile, delimiter=';', quotechar="'")
+                first_iter = True
                 for row in reader:
                     if trustfile_header == []:
                         trustfile_header = row
@@ -1257,15 +1257,17 @@ class BaselineAgent(ArtificialBrain):
                     # Retrieve trust values
                     if row and row[0] == self._human_name:
                         name = row[0]
+                        if first_iter:
+                            self._trustBeliefs[name] = {}
+                            first_iter = False
                         task = row[1]
                         competence = float(row[2])
                         willingness = float(row[3])
                         instances = int(row[4])
                         competence_instances = int(row[5])
-                        self._trustBeliefs[name] = {}
                         self._trustBeliefs[name]['competence'] = competence
                         self._trustBeliefs[name]['competence_instances'] = competence_instances
-                        self._trustBeliefs[name][task] = {'willingness': willingness, 'instances': instances}
+                        self._trustBeliefs[self._human_name][task] = {'willingness': willingness, 'instances': instances}
                     # Initialize default trust values
                     if row and row[0] != self._human_name:
                         competence = default
@@ -1371,13 +1373,14 @@ class BaselineAgent(ArtificialBrain):
             elif 'remove: at' in message.lower():
                 position = int(message.split("at", 1)[-1].strip())
                 closest_room = int(self._getClosestRoom(state, self._rooms, None).split(' ')[1].strip())
-                if position != closest_room or self._phase != Phase.REMOVE_OBSTACLE_IF_NEEDED:
+                if position != closest_room or self._phase != Phase.REMOVE_OBSTACLE_IF_NEEDED and self._phase != Phase.ENTER_ROOM:
                     continue
                 is_stone = False
                 for info in state.values():
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and 'stone' in info['obj_id']:
                         is_stone = True
                 if is_stone:
+                    print("Decreasing competence because you asked me to remove a stone")
                     competence = trustBeliefs[self._human_name]['competence']
                     competence_instances = trustBeliefs[self._human_name]['competence_instances']
                     competence = ((competence*competence_instances) - 1)/(competence_instances+1)

@@ -1,1 +1,5 @@
-name;task;competence;willingness;instances;competence_instances;;;;;
+name;task;competence;willingness;instances;competence_instances
+dora;remove_objects;1.0;0.33331576246898004;16;9
+dora;rescue_mild;1.0;-0.20908452041785414;15;9
+dora;rescue_critical;1.0;-0.9767213114754099;183;9
+dora;search_rooms;1.0;1.0;13;9
