@@ -92,6 +92,7 @@ class BaselineAgent(ArtificialBrain):
         self._person_is_coming = False
         self._object_found = False
         self._agent_asked_for_removal = False
+        self._forbidden_coords = None
 
     def initialize(self):
         # Initialization of the state tracker and navigation algorithm
@@ -193,6 +194,9 @@ class BaselineAgent(ArtificialBrain):
                         remaining_vics.append(str(info['img_name'])[8:-4])
                         remaining[str(info['img_name'])[8:-4]] = info['location']
                     self._goal_locations[str(info['img_name'])[8:-4]] = info['location']
+                    self._forbidden_coords = set(self._goal_locations.values())
+                    for x, y in self._goal_locations.values():
+                        self._forbidden_coords.update([(x - 1, y), (x, y + 1), (x, y - 1)])
                 if remaining_zones:
                     self._remainingZones = remaining_zones
                     self._remaining = remaining
@@ -1087,7 +1091,7 @@ class BaselineAgent(ArtificialBrain):
             if 'class_inheritance' in info and 'CollectableBlock' in info['class_inheritance']:
                 vic = str(info['img_name'][8:-4])
                 agent_location = state[self.agent_id]['location']
-                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._goal_locations.values():
+                if vic in self._collected_victims and vic not in self._rescued_by_robot and 'mildly' in vic.lower() and agent_location not in self._forbidden_coords:
                     willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
                     willingness = ((willingness * instances) - 1) / (instances + 1)
