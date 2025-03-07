@@ -1,5 +1,5 @@
 name;task;competence;willingness;instances;competence_instances
-Ben;remove_objects;1.0;0.7829999999999998;4;6
-Ben;rescue_mild;1.0;-0.4733333333333334;3;6
-Ben;rescue_critical;1.0;-0.5910714285714286;14;6
-Ben;search_rooms;1.0;0.7692307692307693;13;6
+alice;remove_objects;1.0;1.0;0;1
+alice;rescue_mild;1.0;0.0;0;1
+alice;rescue_critical;1.0;0.0;0;1
+alice;search_rooms;1.0;1.0;1;1

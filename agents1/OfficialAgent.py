@@ -463,7 +463,7 @@ class BaselineAgent(ArtificialBrain):
                                 print("I am decreasing willingness because human is not coming")
                                 willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                 instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                                willingness -= 0.005 / instances
+                                willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -596,7 +596,7 @@ class BaselineAgent(ArtificialBrain):
                                 if time_passed > threshold:
                                     willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
                                     instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                                    willingness -= 0.005 / instances
+                                    willingness -= 0.005 / (instances + 1)
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                                     # Restrict the willingness belief to a range of -1 to 1
                                     trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
@@ -953,7 +953,7 @@ class BaselineAgent(ArtificialBrain):
                             if time_passed > threshold and 'mild' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
-                                willingness -= 0.005 / instances
+                                willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_mild']['willingness'] = np.clip(
@@ -983,7 +983,7 @@ class BaselineAgent(ArtificialBrain):
                             if time_passed > threshold and 'critical' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                                willingness -= 0.005 / instances
+                                willingness -= 0.005 / (instances + 1)
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
                                 # Restrict the willingness belief to a range of -1 to 1
                                 trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
