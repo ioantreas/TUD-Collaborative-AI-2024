@@ -765,13 +765,23 @@ class BaselineAgent(ArtificialBrain):
                                                                 'obj_id': info['obj_id']}
                                 # Communicate which victim the agent found and ask the human whether to rescue the victim now or at a later stage
                                 if 'mild' in vic and self._answered == False and not self._waiting:
-                                    self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue together", "Rescue alone", or "Continue" searching. \n \n \
-                                        Important features to consider are: \n safe - victims rescued: ' + str(
-                                        self._collected_victims) + '\n explore - areas searched: area ' + str(
-                                        self._searched_rooms).replace('area ', '') + '\n \
-                                        clock - extra time when rescuing alone: 15 seconds \n afstand - distance between us: ' + self._distance_human,
-                                                      'RescueBot')
-                                    self._waiting = True
+                                    competence = trustBeliefs[self._human_name]['competence']
+                                    decision_threshold = (1 + competence) / 4
+                                    if random.uniform(0, 1) < decision_threshold:
+                                        self.send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Since your competence is high, I will let you come pick it up.')
+                                        self._answered = True
+                                        self._waiting = False
+                                        self._todo.append(self._recent_vic)
+                                        self._recent_vic = None
+                                        self._phase = Phase.FIND_NEXT_GOAL
+                                    else:
+                                        self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue together", "Rescue alone", or "Continue" searching. \n \n \
+                                            Important features to consider are: \n safe - victims rescued: ' + str(
+                                            self._collected_victims) + '\n explore - areas searched: area ' + str(
+                                            self._searched_rooms).replace('area ', '') + '\n \
+                                            clock - extra time when rescuing alone: 15 seconds \n afstand - distance between us: ' + self._distance_human,
+                                                          'RescueBot')
+                                        self._waiting = True
 
                                 if 'critical' in vic and self._answered == False and not self._waiting:
                                     self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Please decide whether to "Rescue" or "Continue" searching. \n\n \
