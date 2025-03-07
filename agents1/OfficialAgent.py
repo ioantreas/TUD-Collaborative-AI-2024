@@ -768,7 +768,7 @@ class BaselineAgent(ArtificialBrain):
                                     competence = trustBeliefs[self._human_name]['competence']
                                     decision_threshold = (1 + competence) / 4
                                     if random.uniform(0, 1) < decision_threshold:
-                                        self.send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Since your competence is high, I will let you come pick it up.')
+                                        self._send_message('Found ' + vic + ' in ' + self._door['room_name'] + '. Since your competence is high, I will let you come pick it up.', 'RescueBot')
                                         self._answered = True
                                         self._waiting = False
                                         self._todo.append(self._recent_vic)
