@@ -1327,6 +1327,7 @@ class BaselineAgent(ArtificialBrain):
                         self._trustBeliefs[self._human_name]['competence_instances'] = competence_instances
                         for task in self._tasks:
                             self._trustBeliefs[self._human_name][task] = {'willingness':  random.uniform(-1, 1), 'instances': instances}
+                        print("Trust belief values: ", self._trustBeliefs)
             self._first_tick = False
         else:
             with open(folder + '/beliefs/currentTrustBelief.csv') as csvfile:
