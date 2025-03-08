@@ -399,11 +399,17 @@ class BaselineAgent(ArtificialBrain):
                 for info in state.values():
                     if 'class_inheritance' in info and 'ObstacleObject' in info['class_inheritance'] and allegedly_removed:
                         willingness = trustBeliefs[self._human_name]['remove_objects']['willingness']
+                        competence = trustBeliefs[self._human_name]['competence']
                         instances = trustBeliefs[self._human_name]['remove_objects']['instances']
-                        willingness = ((willingness * instances) - 2) / (instances + 1)
+                        willingness = ((willingness * instances) - 1) / (instances + 1)
+                        competence = ((competence * instances) - 2) / (instances + 1)
                         trustBeliefs[self._human_name]['remove_objects']['willingness'] = willingness
                         trustBeliefs[self._human_name]['remove_objects']['willingness'] = np.clip(
                             trustBeliefs[self._human_name]['remove_objects']['willingness'], -1,
+                            1)
+                        trustBeliefs[self._human_name]['competence'] = willingness
+                        trustBeliefs[self._human_name]['competence'] = np.clip(
+                            trustBeliefs[self._human_name]['competence'], -1,
                             1)
                         self._allegedly_removed_obstacles.remove(closest_room)
                         self.save_to_file(trustBeliefs)
