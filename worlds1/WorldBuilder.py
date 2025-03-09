@@ -169,7 +169,7 @@ def create_builder(task_type, condition, name, folder):
 
     # Create folders where the logs are stored during the official condition
     if task_type=="official":
-        current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%dd-%mm-%Yy")
+        current_exp_folder = datetime.now().strftime("exp_"+condition+"_at_time_%Hh-%Mm-%Ss_date_%exp_weak_at_time_18h-59m-41s_date_07d-03m-2025y-%mm-%Yy")
         logger_save_folder = os.path.join("logs", current_exp_folder)
         builder.add_logger(ActionLogger, log_strategy=1, save_path=logger_save_folder, file_name_prefix="actions_")
         
