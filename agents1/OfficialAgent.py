@@ -970,6 +970,7 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 25
                             elif self._distance_human == 'close':
                                 threshold = 21
+                            # Decrease willingness if RescueBot waits too much
                             if time_passed > threshold and 'mild' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
@@ -982,6 +983,7 @@ class BaselineAgent(ArtificialBrain):
                                 self.save_to_file(trustBeliefs)
                                 willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                                 decision_threshold = (1 + willingness) / 2
+                                # Make a decision whether to collect alone
                                 if random.uniform(0, 1) > decision_threshold and time_passed % 3 == 0:
                                     self._goal_loc = self._goal_locations[self._goal_vic]
                                     self._phase = Phase.PLAN_PATH_TO_DROPPOINT
@@ -1000,6 +1002,7 @@ class BaselineAgent(ArtificialBrain):
                                 threshold = 25
                             elif self._distance_human == 'close':
                                 threshold = 21
+                            # Decrease willingness if RescueBot waits too much
                             if time_passed > threshold and 'critical' in info['obj_id']:
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                                 instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
@@ -1012,6 +1015,7 @@ class BaselineAgent(ArtificialBrain):
                                 self.save_to_file(trustBeliefs)
                                 willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                                 decision_threshold = (1 + willingness) / 2
+                                # Make a decision whether to search for another area
                                 if random.uniform(0, 1) > decision_threshold and time_passed % 3 == 0:
 
                                     self._answered = True
@@ -1034,6 +1038,7 @@ class BaselineAgent(ArtificialBrain):
                 # Add the victim to the list of rescued victims when it has been picked up
                 if len(objects) == 0 and 'critical' in self._goal_vic or len(
                         objects) == 0 and 'mild' in self._goal_vic and self._rescue == 'together':
+                    # Increase willingness if the victim was picked up
                     if 'mild' in self._goal_vic:
                         willingness = trustBeliefs[self._human_name]['rescue_mild']['willingness']
                         instances = trustBeliefs[self._human_name]['rescue_mild']['instances']
@@ -1125,17 +1130,6 @@ class BaselineAgent(ArtificialBrain):
                     return CarryObject.__name__, {
                         'object_id': info['obj_id'],
                         'human_name': self._human_name}
-
-                # if vic in self._collected_victims and vic not in self._rescued_by_robot and 'critically' in vic.lower() and agent_location not in self._goal_locations.values() :
-                #     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
-                #     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
-                #     willingness = ((willingness * instances) - 1) / (instances + 1)
-                #     trustBeliefs[self._human_name]['rescue_critical']['instances'] += 1
-                #     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = willingness
-                #     trustBeliefs[self._human_name]['rescue_critical']['willingness'] = np.clip(
-                #         trustBeliefs[self._human_name]['rescue_critical']['willingness'], -1,
-                #         1)
-                #     self.save_to_file(trustBeliefs)
 
     def save_to_file(self, trustBeliefs):
         # Save current trust belief values so we can later use and retrieve them to add to a csv file with all the logged trust belief values
@@ -1443,7 +1437,9 @@ class BaselineAgent(ArtificialBrain):
                         1)
                 self._processed_messages.append(message)
 
+            # Change willingness based on the response of a human if RescueBot says it found a critically injured victim
             if 'critically injured' in self._send_messages[-1].lower() and len(self._send_messages) > 1:
+                # Continuing decreases willingness
                 if 'continue' in message.lower():
                     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
@@ -1454,6 +1450,7 @@ class BaselineAgent(ArtificialBrain):
                         trustBeliefs[self._human_name]['rescue_critical']['willingness'], -1,
                         1)
 
+                # Rescuing increases willingness
                 if 'rescue' in message.lower():
                     willingness = trustBeliefs[self._human_name]['rescue_critical']['willingness']
                     instances = trustBeliefs[self._human_name]['rescue_critical']['instances']
